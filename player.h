@@ -19,6 +19,7 @@ private:
 	float currentJumpSpeed;			//現在のジャンプスピード
 	float frameCount;
 	float nowRunAnimSpeed;
+	float assaultTime;
 
 	bool isMove;                    //動いたか
 	bool isAttack;					//攻撃してるか
@@ -29,6 +30,7 @@ private:
 	bool isSlash_Up;
 	bool isSlash_Ratate;
 	bool isRoll;
+	bool isRush;
 	bool isPush;					//ボタンを押したか
 	bool isPushAttack;
 	bool isCameraLockOn;			
@@ -66,7 +68,7 @@ public:
 	void Update(const Input& input, const VECTOR& cameraDirection, const VECTOR& DragonPosition);
 	void Draw();
 
-	void Attack();
+	void Attack(const Input& input);
 	void Jump(const Input& input);
 	void JumpCalclation();
 	void StateCheck();
@@ -76,6 +78,17 @@ public:
 	void MotionUpdate() override;
 	void OnLockOnChanged(bool flag)override { isCameraLockOn = flag; }
 	void DashUpdate();
+	void RushProcess(const VECTOR& cameraDirection);
+	
+	struct PadInput
+	{
+		bool isUp(const Input& input);
+		bool isDown(const Input& input);
+		bool isRight(const Input& input);
+		bool isLeft(const Input& input);
+	};
+
+	PadInput padInput;
 
 	//////////////////////////////////
 	// getter

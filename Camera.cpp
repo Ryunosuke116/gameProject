@@ -220,7 +220,7 @@ void Camera::LockOnCamera(const VECTOR& playerPosition,const VECTOR& dragonPosit
 	//ドラゴン→playerへの方向ベクトル
 	VECTOR direction = VSub(playerPosition, dragonPosition);
 	direction = VNorm(direction);
-	direction = VScale(direction, 40.0f);
+	direction = VScale(direction, 15.0f);
 	//AimPosition.z = playerPosition.z + direction.z;
 	AimPosition = VAdd(playerPosition, direction);
 
@@ -254,7 +254,7 @@ void Camera::LockOnCamera(const VECTOR& playerPosition,const VECTOR& dragonPosit
 		//}
 	}
 
-	AimPosition.y = 9.0f;
+	AimPosition.y = 4.0f;
 	cameraDirection = VSub(LookPosition, AimPosition);
 	cameraDirection.y = 0.0f;
 	cameraDirection = VNorm(cameraDirection);

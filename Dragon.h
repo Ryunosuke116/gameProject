@@ -2,7 +2,7 @@
 class Dragon : public BaseChara
 {
 private:
-	static constexpr float modelScale = 0.005f;
+	static constexpr float modelScale = 0.01f;
 public:
 
 	Dragon();

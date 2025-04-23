@@ -40,7 +40,7 @@ void Dragon::Update()
 	MV1SetPosition(modelHandle, position);
 	//UpdateAngle(modelHandle);
 
-	//MotionUpdate();
+	MotionUpdate();
 
     if (CheckHitKey(KEY_INPUT_3))
     {
