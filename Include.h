@@ -1,0 +1,21 @@
+#pragma once
+#include <iostream>
+#include <cassert>
+#include <unordered_map>
+#include <string_view>
+#include <array>
+#include <vector>
+#include <math.h>    
+#include <cmath>
+#include "DxLib.h"
+#include "EffekseerForDXLib.h"
+#include "CameraObserver.h"
+#include "Map.h"
+#include "Input.h"
+#include "Camera.h"
+#include"BaseChara.h"
+#include "Dragon.h"
+#include "player.h"
+#include "BaseScene.h"
+#include "Game.h"
+#include "SceneManager.h"
