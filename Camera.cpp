@@ -135,6 +135,7 @@ void Camera::Update(const VECTOR& playerPosition, const VECTOR& dragonPosition)
 		cameraDirection = VSub(LookPosition, AimPosition);
 		cameraDirection = VNorm(cameraDirection);
 
+		isReflected = CheckCameraViewClip(dragonPosition);
 	}
 	else if (isLockOn)
 	{
@@ -221,37 +222,41 @@ void Camera::LockOnCamera(const VECTOR& playerPosition,const VECTOR& dragonPosit
 	VECTOR direction = VSub(playerPosition, dragonPosition);
 	direction = VNorm(direction);
 	direction = VScale(direction, 15.0f);
+
+	VECTOR cameraDirection = VSub(AimPosition, dragonPosition);
+	cameraDirection = VNorm(cameraDirection);
+
 	//AimPosition.z = playerPosition.z + direction.z;
-	AimPosition = VAdd(playerPosition, direction);
+	//AimPosition = VAdd(playerPosition, direction);
 
 	//カメラから外れた時
 	if (isReflected)
 	{
-		//float left_len2 = VDot(leftPosition, leftPosition);
-		//float right_len2 = VDot(rightPosition, rightPosition);
-		//float leftScalar = VDot(direction, leftPosition) / left_len2;
-		//float rightScalar = VDot(direction, rightPosition) / right_len2;
+		float left_len2 = VDot(leftPosition, leftPosition);
+		float right_len2 = VDot(rightPosition, rightPosition);
+		float leftScalar = VDot(direction, leftPosition) / left_len2;
+		float rightScalar = VDot(direction, rightPosition) / right_len2;
 
-		////最も近い接点
-		//VECTOR nearPoint_left = VAdd(dragonPosition, VScale(leftPosition, leftScalar));
-		//VECTOR nearPoint_right = VAdd(dragonPosition, VScale(rightPosition, rightScalar));
+		//最も近い接点
+		VECTOR nearPoint_left = VAdd(dragonPosition, VScale(leftPosition, leftScalar));
+		VECTOR nearPoint_right = VAdd(dragonPosition, VScale(rightPosition, rightScalar));
 
-		////最も近い接点からplayerへのベクトル
-		//VECTOR diff_left = VSub(playerPosition, nearPoint_left);
-		//VECTOR diff_right = VSub(playerPosition, nearPoint_right);
+		//最も近い接点からplayerへのベクトル
+		VECTOR diff_left = VSub(playerPosition, nearPoint_left);
+		VECTOR diff_right = VSub(playerPosition, nearPoint_right);
 
-		////点と直線の距離
-		//float distance_left = VSize(diff_left);
-		//float distance_right = VSize(diff_right);
+		//点と直線の距離
+		float distance_left = VSize(diff_left);
+		float distance_right = VSize(diff_right);
 
-		//if (distance_left > distance_right)
-		//{
-		//	AimPosition = VAdd(AimPosition, diff_right);
-		//}
-		//else
-		//{
-		//	AimPosition = VAdd(AimPosition, diff_left);
-		//}
+		if (distance_left > distance_right)
+		{
+			AimPosition = VAdd(AimPosition, diff_right);
+		}
+		else
+		{
+			AimPosition = VAdd(AimPosition, diff_left);
+		}
 	}
 
 	AimPosition.y = 4.0f;

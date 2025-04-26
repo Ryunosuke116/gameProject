@@ -4,18 +4,21 @@ class BaseChara
 protected:
 
 	int modelHandle;
-	int attachIndex;
 	int motionNum;
-	float animBlendRate;		
-	int animHandle_now;				//現在のアニメーション
-	int prevAnimHandle;
+	int HP;
+	int nowFrameNumber;
+
 	int prevAttachIndex;			//前のアニメーション情報
 	float prevPlayTime_anim;		//前回の再生時間
 	float prevTotalTime_anim;		//前回の総再生時間
+	float prevPlayAnimSpeed;
 	
-	int nowFrameNumber;
+	int currentAttachIndex;
+	float currentPlayTime_anim;			//現在の再生時間
+	float currentPlayAnimSpeed;
+	float animBlendRate;		
+	float keepPlayTime_anim;
 
-	float playTime_anim;
 	float totalTime_anim;
 	float angle;
 
@@ -36,7 +39,7 @@ public:
 	virtual void Update();
 	virtual void Draw();
 
-	virtual void ChangeMotion(const int& motionNum);
+	virtual void ChangeMotion(const int& motionNum, const float playAnimSpeed);
 	virtual void MotionUpdate();
 	virtual void Move(const Input& input, VECTOR& moveVec, const VECTOR& cameraDirection);
 	void UpdateAngle(int& modelHandle);

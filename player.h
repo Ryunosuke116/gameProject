@@ -6,7 +6,7 @@ private:
 	static constexpr float modelScale = 0.06f;
 	static constexpr float MoveSpeed = 0.4f;	    // à⁄ìÆë¨ìx
 	static constexpr float runSpeed = 0.4f;
-	static constexpr float dashMoveSpeed = 0.8f;
+	static constexpr float Max_DashMoveSpeed = 1.0f;
 	static constexpr float dashSpeed = 0.7f;
 	static constexpr float attackAnimSpeed = 1.0f;	//çUåÇë¨ìx
 	static constexpr float rollAnimSpeed = 1.5f;	//çUåÇë¨ìx
@@ -74,11 +74,12 @@ public:
 	void StateCheck();
 	void Move(const Input& input, VECTOR& moveVec, const VECTOR& cameraDirection) override;
 	void UpdateAngle(const VECTOR direction);
-	void ChangeMotion(const int& motionNum)override;
+	void ChangeMotion(const int& motionNum, const float playAnimSpeed)override;
 	void MotionUpdate() override;
 	void OnLockOnChanged(bool flag)override { isCameraLockOn = flag; }
 	void DashUpdate();
 	void RushProcess(const VECTOR& cameraDirection);
+	void FlagProcess();
 	
 	struct PadInput
 	{

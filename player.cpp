@@ -51,10 +51,10 @@ void Player::Initialize()
     directionToFace = VGet(0.0f, 0.0f, 0.0f);
     targetMoveDirection = VGet(0.0f, 0.0f, 0.0f);
     MV1SetRotationXYZ(modelHandle, VGet(0, 0, 0));
-    ChangeMotion(idle);
+    ChangeMotion(idle, PlayAnimSpeed);
     nowFrameNumber = 50;
     angle = 0;
-    playTime_anim = 0;
+    currentPlayTime_anim = 0;
     prevAttachIndex = -1;
     prevPlayTime_anim = 0;
     prevTotalTime_anim = 0;
@@ -91,7 +91,7 @@ void Player::Update(const Input& input,const VECTOR& cameraDirection,const VECTO
         //ロールアクション
         if (CheckHitKey(KEY_INPUT_Q) && !isJump)
         {
-            ChangeMotion(roll);
+            ChangeMotion(roll, rollAnimSpeed);
             isRoll = true;
             if (VSize(moveVec) != 0)
             {
@@ -125,7 +125,7 @@ void Player::Update(const Input& input,const VECTOR& cameraDirection,const VECTO
         //ロックオンしていなければ通常run
         if (animNumber != run && !isCameraLockOn && !isJump)
         {
-            ChangeMotion(run);
+            ChangeMotion(run, nowRunAnimSpeed);
         }
 
         targetMoveDirection = VNorm(moveVec);
@@ -138,7 +138,7 @@ void Player::Update(const Input& input,const VECTOR& cameraDirection,const VECTO
     {
         if (animNumber != idle)
         {
-            ChangeMotion(idle);
+            ChangeMotion(idle, PlayAnimSpeed);
         }
     }
 
@@ -154,7 +154,7 @@ void Player::Update(const Input& input,const VECTOR& cameraDirection,const VECTO
 
     position = VAdd(position, moveVec);
 
-    if (playTime_anim > 5.0f && animNumber == jump)
+    if (currentPlayTime_anim > 5.0f && animNumber == jump)
     {
         position.y += currentJumpSpeed;
     }
@@ -204,7 +204,8 @@ void Player::Draw()
     DrawSphere3D(framePosition, 1.0f, 30, GetColor(0, 0, 0),
         GetColor(255, 0, 0),FALSE);
 
-    printfDx("playTime%f\n", playTime_anim);
+    printfDx("playTime%f\n", currentPlayTime_anim);
+    printfDx("animBlendRate %f\n", animBlendRate);
 
     // １番のメッシュの表示状態を「非表示」にする
     //MV1SetMeshVisible(modelHandle, 3, FALSE);
@@ -234,7 +235,7 @@ void Player::Move(const Input& input, VECTOR& moveVec, const VECTOR& cameraDirec
         if (isCameraLockOn && animNumber != run && 
             !isJump)
         {
-            ChangeMotion(run);
+            ChangeMotion(run,nowRunAnimSpeed);
         }
         moveVec = VAdd(moveVec, upMove);
         isMove = true;
@@ -246,7 +247,7 @@ void Player::Move(const Input& input, VECTOR& moveVec, const VECTOR& cameraDirec
         if (isCameraLockOn && animNumber != run_Back &&
             !isJump)
         {
-            ChangeMotion(run_Back);
+            ChangeMotion(run_Back, PlayAnimSpeed);
         }
         moveVec = VAdd(moveVec, VScale(upMove, -1.0f));
         isMove = true;
@@ -258,7 +259,7 @@ void Player::Move(const Input& input, VECTOR& moveVec, const VECTOR& cameraDirec
         if (isCameraLockOn && animNumber != run_Left &&
             !isJump)
         {
-            ChangeMotion(run_Left);
+            ChangeMotion(run_Left, PlayAnimSpeed);
         }
         moveVec = VAdd(moveVec, rightMove);
         isMove = true;
@@ -270,7 +271,7 @@ void Player::Move(const Input& input, VECTOR& moveVec, const VECTOR& cameraDirec
         if (isCameraLockOn && animNumber != run_Right &&
             !isJump)
         {
-            ChangeMotion(run_Right);
+            ChangeMotion(run_Right, PlayAnimSpeed);
         }
         moveVec = VAdd(moveVec, VScale(rightMove, -1.0f));
         isMove = true;
@@ -338,29 +339,29 @@ void Player::UpdateAngle(const VECTOR direction)
 void Player::Attack(const Input& input)
 {
     if (padInput.isUp(input) && CheckHitKey(KEY_INPUT_F) && 
-        isCameraLockOn)
+        isCameraLockOn && !isJump)
     {
         if (animNumber != attack_Assault && !isAttack)
         {
-            ChangeMotion(attack_Assault);
+            ChangeMotion(attack_Assault, attackAnimSpeed);
             isAttack = true;
         }
     }
     //ボタンを押したら攻撃
-    else if (CheckHitKey(KEY_INPUT_F))
+    else if (CheckHitKey(KEY_INPUT_F) && !isJump)
     {
         if (!isPushAttack)
         {
             if (!isSlash && animNumber != attack &&
                 !isSlash_Up && !isSlash_Ratate)
             {
-                ChangeMotion(attack_02);
+                ChangeMotion(attack_02, attackAnimSpeed);
                 isAttack = true;
                 isSlash = true;
             }
             else if (isSlash && !isAttack)
             {
-                ChangeMotion(attack_Up);
+                ChangeMotion(attack_Up, attackAnimSpeed);
                 isAttack = true;
                 isSlash_Up = true;
                 isSlash = false;
@@ -368,7 +369,7 @@ void Player::Attack(const Input& input)
             }
             else if (isSlash_Up && !isAttack)
             {
-                ChangeMotion(attack_Rotate);
+                ChangeMotion(attack_Rotate, attackAnimSpeed);
                 isAttack = true;
                 isSlash_Ratate = true;
                 isSlash_Up = false;
@@ -402,13 +403,14 @@ void Player::RushProcess(const VECTOR& cameraDirection)
         assaultTime++;
     }
 
-    if (playTime_anim == 19.0f && !isRush && isAttack && 
+    if (currentPlayTime_anim == 19.0f && !isRush && isAttack && 
         animNumber == attack_Assault)
     {
         isRush = true;
     }
 
-    if (assaultTime > 18.0f && isRush)
+    //カウントが18fを超えたら終了
+    if (assaultTime > 25.0f && isRush)
     {
         isRush = false;
         assaultTime = 0.0f;
@@ -431,11 +433,11 @@ void Player::Jump(const Input& input)
             isJump = true;
             if (isMove)
             {
-                ChangeMotion(run_Jump);
+                ChangeMotion(run_Jump, PlayAnimSpeed);
             }
             else
             {
-                ChangeMotion(jump);
+                ChangeMotion(jump, PlayAnimSpeed);
             }
         }
         //二段ジャンプ
@@ -446,11 +448,11 @@ void Player::Jump(const Input& input)
             currentJumpSpeed = addJumpPower;
             if (isMove)
             {
-                ChangeMotion(run_Jump);
+                ChangeMotion(run_Jump, PlayAnimSpeed);
             }
             else
             {
-                ChangeMotion(jump);
+                ChangeMotion(jump, PlayAnimSpeed);
             }
         }
     }
@@ -465,7 +467,7 @@ void Player::Jump(const Input& input)
 /// </summary>
 void Player::JumpCalclation()
 {
-    if (isJump && playTime_anim > 5.0f && animNumber == jump)
+    if (isJump && currentPlayTime_anim > 5.0f && animNumber == jump)
     {
         currentJumpSpeed += -Gravity;
     }
@@ -520,9 +522,10 @@ void Player::StateCheck()
 /// モーション変更
 /// </summary>
 /// <param name="motionNum"></param>
-void Player::ChangeMotion(const int& motionNum)
+void Player::ChangeMotion(const int& motionNum, const float playAnimSpeed)
 {
-    BaseChara::ChangeMotion(motionNum);
+    
+    BaseChara::ChangeMotion(motionNum, playAnimSpeed);
     animNumber = motionNum;
 
 }
@@ -534,62 +537,113 @@ void Player::MotionUpdate()
 {
     float totalTime_anim;
 
-    // アタッチしたアニメーションの総再生時間を取得する
-    totalTime_anim = MV1GetAttachAnimTotalTime(modelHandle, attachIndex);
-
-    //それぞれの再生スピードで更新
-    if (animNumber == roll)
+    // ブレンド率が１以下の場合は１に近づける
+    if (animBlendRate < 1.0f)
     {
-        playTime_anim += rollAnimSpeed;
-    }
-    //攻撃モーション時は攻撃スピードで更新
-    else if(animNumber == attack || animNumber == attack_Up ||
-        animNumber == attack_Rotate || animNumber == attack_02 || 
-        animNumber == attack_Assault)
-    {
-        if (!isRush)
+        animBlendRate += AnimBlendSpeed;
+        if (animBlendRate > 1.0f)
         {
-            playTime_anim += attackAnimSpeed;
+            animBlendRate = 1.0f;
         }
     }
-    else if (animNumber == run)
+
+    if (currentAttachIndex != -1)
     {
-        playTime_anim += nowRunAnimSpeed;
-    }
-    else
-    {
-        playTime_anim += PlayAnimSpeed;
-        nowRunAnimSpeed = runSpeed;
+        // アタッチしたアニメーションの総再生時間を取得する
+        totalTime_anim = MV1GetAttachAnimTotalTime(modelHandle, currentAttachIndex);
+
+        //再生時間更新
+     /*   currentPlayTime_anim += currentPlayAnimSpeed;
+        keepPlayTime_anim = currentPlayTime_anim;*/
+
+        //それぞれの再生スピードで更新
+        if (animNumber == roll)
+        {
+            currentPlayTime_anim += rollAnimSpeed;
+        }
+        //攻撃モーション時は攻撃スピードで更新
+        else if (animNumber == attack || animNumber == attack_Up ||
+            animNumber == attack_Rotate || animNumber == attack_02 ||
+            animNumber == attack_Assault)
+        {
+            if (!isRush)
+            {
+                currentPlayTime_anim += attackAnimSpeed;
+            }
+        }
+        else if (animNumber == run)
+        {
+            currentPlayTime_anim += nowRunAnimSpeed;
+        }
+        else
+        {
+            currentPlayTime_anim += PlayAnimSpeed;
+            nowRunAnimSpeed = runSpeed;
+        }
+
+        //総再生時間を超えたら再生時間をリセット
+        if (currentPlayTime_anim >= totalTime_anim)
+        {
+            //回転斬りの場合、立ち状態に戻す
+            if (animNumber == attack_Rotate)
+            {
+                ChangeMotion(idle, PlayAnimSpeed);
+            }
+            //ロールの場合
+            if (isRoll)
+            {
+                isRoll = false;
+                position = framePosition;
+                position.y = 0.0f;
+            }
+            keepPlayTime_anim = 0;
+            isReset = true;
+        }
+        else
+        {
+            isReset = false;
+        }
+
+
+        //総再生時間を超えたらリセット
+        if (currentPlayTime_anim >= totalTime_anim)
+        {
+            currentPlayTime_anim = static_cast<float>(fmod(currentPlayTime_anim, totalTime_anim));
+        }
+
+        // 再生時間をセットする
+        MV1SetAttachAnimTime(modelHandle, currentAttachIndex, currentPlayTime_anim);
+
+        //アニメーションのモデルに対する反映率をセット
+        MV1SetAttachAnimBlendRate(modelHandle, currentAttachIndex, animBlendRate);
     }
 
-    //総再生時間を超えたら再生時間をリセット
-    if (playTime_anim >= totalTime_anim)
+    //再生しているアニメーション２の処理
+    if (prevAttachIndex != -1)
     {
-        //回転斬りの場合、立ち状態に戻す
-        if (animNumber == attack_Rotate)
-        {
-            ChangeMotion(idle);
-        }
-        //ロールの場合
-        if (isRoll)
-        {
-            isRoll = false;
-            position = framePosition;
-            position.y = 0.0f;
-        }
-        playTime_anim = 0;
-        isReset = true;
-    }
-    else
-    {
-        isReset = false;
-    }
+        // アニメーションの総時間を取得
+        totalTime_anim = MV1GetAttachAnimTotalTime(modelHandle, prevAttachIndex);
 
-    // 再生時間をセットする
-    MV1SetAttachAnimTime(modelHandle, attachIndex, playTime_anim);
+        // 再生時間を進める
+        prevPlayTime_anim += prevPlayAnimSpeed;
+
+        // 再生時間が総時間に到達していたら再生時間をループさせる
+        if (prevPlayTime_anim > totalTime_anim)
+        {
+            prevPlayTime_anim = static_cast<float>(fmod(prevPlayTime_anim, totalTime_anim));
+        }
+
+        // 変更した再生時間をモデルに反映させる
+        MV1SetAttachAnimTime(modelHandle, prevAttachIndex, prevPlayTime_anim);
+
+        // アニメーション２のモデルに対する反映率をセット
+        MV1SetAttachAnimBlendRate(modelHandle, prevAttachIndex, 1.0f - animBlendRate);
+    }
 }
 
-
+/// <summary>
+/// ダッシュ更新
+/// </summary>
 void Player::DashUpdate()
 {
     if (CheckHitKey(KEY_INPUT_L))
@@ -602,9 +656,9 @@ void Player::DashUpdate()
     }
 
     //一定値を超えたらそこで止める
-    if (nowRunAnimSpeed > dashMoveSpeed)
+    if (nowRunAnimSpeed > Max_DashMoveSpeed)
     {
-        nowRunAnimSpeed = dashMoveSpeed;
+        nowRunAnimSpeed = Max_DashMoveSpeed;
     }
     if (nowRunAnimSpeed < runSpeed)
     {
@@ -624,6 +678,7 @@ bool Player::PadInput::isUp(const Input& input)
     {
         return true;
     }
+
     return false;
 }
 
@@ -672,4 +727,8 @@ bool Player::PadInput::isLeft(const Input& input)
     return false;
 }
 
+void Player::FlagProcess()
+{
+
+}
 
