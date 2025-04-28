@@ -34,7 +34,7 @@ void Camera::Initialize()
 	leftPosition= VGet(0.0f, 0, 10.0f);
 	rightPosition= VGet(0.0f, 0, -10.0f);
 
-	radian = 0.0f;
+	angle = 0.0f;
 	pravCross_right = 0;
 	pravCross_left = 0;
 	a = -177.55f;
@@ -106,12 +106,12 @@ void Camera::Update(const VECTOR& playerPosition, const VECTOR& dragonPosition)
 	if (!isLockOn)
 	{
 
-		float radian = a * DX_PI_F / 360.0f;
-		this->radian = radian;
+		float angle = a * DX_PI_F / 360.0f;
+		this->angle = angle;
 
 		//AimPosition = VAdd(AimPosition, addAimPosition);
-		AimPosition.x = LookPosition.x + 30 * cos(radian);
-		AimPosition.z = LookPosition.z + 30 * sin(radian);
+		AimPosition.x = LookPosition.x + 30 * cos(angle);
+		AimPosition.z = LookPosition.z + 30 * sin(angle);
 
 		float maxRange = 5.0f;
 		float maxRange_ = 10.0f;
@@ -135,7 +135,7 @@ void Camera::Update(const VECTOR& playerPosition, const VECTOR& dragonPosition)
 		cameraDirection = VSub(LookPosition, AimPosition);
 		cameraDirection = VNorm(cameraDirection);
 
-		isReflected = CheckCameraViewClip(dragonPosition);
+		//isReflected = CheckCameraViewClip(dragonPosition);
 	}
 	else if (isLockOn)
 	{
@@ -180,11 +180,14 @@ void Camera::Update(const VECTOR& playerPosition, const VECTOR& dragonPosition)
 
 }
 
+/// <summary>
+/// 描画
+/// </summary>
 void Camera::Draw()
 {
 	printfDx("AimPosition.x %f\AimPosition.z %f\n", AimPosition.x, AimPosition.z);
 	printfDx("LookPosition.x %f\LookPosition.z %f\n", LookPosition.x, LookPosition.z);
-	printfDx("radian %f\n",radian);
+	printfDx("angle %f\n",angle);
 	printfDx("right.x %f\nright.y %f\nright.z %f\n", rightPosition.x, rightPosition.y, rightPosition.z);
 	printfDx("left.x %f\nleft.y %f\nleft.z %f", leftPosition.x, leftPosition.y, leftPosition.z);
 	
@@ -223,54 +226,93 @@ void Camera::LockOnCamera(const VECTOR& playerPosition,const VECTOR& dragonPosit
 	direction = VNorm(direction);
 	direction = VScale(direction, 15.0f);
 
-	VECTOR cameraDirection = VSub(AimPosition, dragonPosition);
-	cameraDirection = VNorm(cameraDirection);
-
-	//AimPosition.z = playerPosition.z + direction.z;
+	//VECTOR cameraDirection = VSub(AimPosition, dragonPosition);
+	//cameraDirection = VNorm(cameraDirection);
+	
 	//AimPosition = VAdd(playerPosition, direction);
+	
+	//TODO::ロックオン時のカメラの制御を円周移動にする
+	//ラジアンを求める
 
 	//カメラから外れた時
 	if (isReflected)
 	{
-		float left_len2 = VDot(leftPosition, leftPosition);
-		float right_len2 = VDot(rightPosition, rightPosition);
-		float leftScalar = VDot(direction, leftPosition) / left_len2;
-		float rightScalar = VDot(direction, rightPosition) / right_len2;
+		//すべてenemyの座標を中心点として考える
+		//カメラの角度
+		float aimPos_angle = atan2(AimPosition.z, AimPosition.x);
+		//プレイヤーの角度
+		float angle = atan2(direction.z, direction.x);
 
-		//最も近い接点
-		VECTOR nearPoint_left = VAdd(dragonPosition, VScale(leftPosition, leftScalar));
-		VECTOR nearPoint_right = VAdd(dragonPosition, VScale(rightPosition, rightScalar));
+		//左右の範囲の角度を求める
+		float angle_left = atan2(leftPosition.z, leftPosition.x);
+		float angle_right = atan2(rightPosition.z, rightPosition.x);
 
-		//最も近い接点からplayerへのベクトル
-		VECTOR diff_left = VSub(playerPosition, nearPoint_left);
-		VECTOR diff_right = VSub(playerPosition, nearPoint_right);
+		//プレイヤーと左右の範囲の差
+		float diff_left = angle_left - angle;
+		float diff_right = angle_right - angle;
 
-		//点と直線の距離
-		float distance_left = VSize(diff_left);
-		float distance_right = VSize(diff_right);
+		////差が小さい方にする
+		//float diff = (diff_left < diff_right) ? diff_left : diff_right;
 
-		if (distance_left > distance_right)
+
+		////差が180°超えていたら180°引いて小さくする
+		//while (diff > DX_PI) diff -= DX_PI;
+		//while (diff < -DX_PI) diff += DX_PI;
+
+		////カメラの角度に差を引く
+		//aimPos_angle += diff;
+
+
+		//if その目標値から一定の左右値を超えた時、超えた分補正する
+		float subAngle = angle - aimPos_angle;
+		float scaleAngle = 0.0f;
+
+		if (subAngle > DX_PI)
 		{
-			AimPosition = VAdd(AimPosition, diff_right);
+			subAngle = DX_PI * 2 - subAngle;
 		}
-		else
-		{
-			AimPosition = VAdd(AimPosition, diff_left);
-		}
+
+		/*scaleAngle = subAngle * cameraSpeed;
+		aimPos_angle = aimPos_angle + scaleAngle;*/
+
+		aimPos_angle = subAngle;
+
+		//円周移動
+		AimPosition.x = LookPosition.x + 60 * cos(aimPos_angle);
+		AimPosition.z = LookPosition.z + 60 * sin(aimPos_angle);
+
+
+		//float left_len2 = VDot(leftPosition, leftPosition);
+		//float right_len2 = VDot(rightPosition, rightPosition);
+		//float leftScalar = VDot(direction, leftPosition) / left_len2;
+		//float rightScalar = VDot(direction, rightPosition) / right_len2;
+
+		////最も近い接点
+		//VECTOR nearPoint_left = VAdd(dragonPosition, VScale(leftPosition, leftScalar));
+		//VECTOR nearPoint_right = VAdd(dragonPosition, VScale(rightPosition, rightScalar));
+
+		////最も近い接点からplayerへのベクトル
+		//VECTOR diff_left = VSub(playerPosition, nearPoint_left);
+		//VECTOR diff_right = VSub(playerPosition, nearPoint_right);
+
+		////点と直線の距離
+		//float distance_left = VSize(diff_left);
+		//float distance_right = VSize(diff_right);
+
+		//if (distance_left > distance_right)
+		//{
+		//	AimPosition = VAdd(AimPosition, diff_right);
+		//}
+		//else
+		//{
+		//	AimPosition = VAdd(AimPosition, diff_left);
+		//}
 	}
 
 	AimPosition.y = 4.0f;
 	cameraDirection = VSub(LookPosition, AimPosition);
 	cameraDirection.y = 0.0f;
 	cameraDirection = VNorm(cameraDirection);
-
-	//float objectWidth = 2.0f;
-	//float objectHeight = 6.0f;
-	//float fov = CalculateFOV(36.0f, 50.0f);
-
-	//float visible = CalculateVisibleWidth(VSize(VSub(playerPosition, aimPosition_Lockon)), fov);
-
-	//isReflected = isObjectVisible(cameraDirection, fov, playerPosition, objectWidth, objectHeight);
 
 	SetCameraPositionAndTarget_UpVecY(AimPosition, LookPosition);
 }
@@ -309,6 +351,18 @@ bool Camera::isObjectVisible(const VECTOR& cameraDirection,const VECTOR& objectP
 
 	//オブジェクト→プレイヤーの方向ベクトル
 	VECTOR toPlayer = VSub(playerPosition, objectPosition);
+
+	////プレイヤーの角度
+	//float player_angle = atan2(toPlayer.z, toPlayer.x);
+
+	////右の角度
+	//float rightPos_angle = atan2(rightPosition.z, rightPosition.x);
+
+	////左の角度
+	//float leftPos_angle = atan2(leftPosition.z, leftPosition.x);
+
+	//float sumRight_angle = player_angle + rightPos_angle;
+	//float sumleft_angle = player_angle + leftPos_angle;
 
 	//クロス積(xz平面)
 	cross_right = rightPosition.x * toPlayer.z - rightPosition.z * toPlayer.x;

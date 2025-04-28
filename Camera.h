@@ -14,7 +14,7 @@ private:
 	VECTOR leftPosition;
 	VECTOR rightPosition;
 	float a;
-	float radian;
+	float angle;
 	float cross_right;
 	float cross_left;
 	float pravCross_right;

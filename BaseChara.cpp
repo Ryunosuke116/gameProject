@@ -145,8 +145,9 @@ void BaseChara::ChangeMotion(const int& motionNum, const float playAnimSpeed)
     animBlendRate = prevAttachIndex == -1 ? 1.0f : 0.0f;
 
 
-/// <summary>
 }
+
+/// <summary>
 /// モーション更新
 /// </summary>
 void BaseChara::MotionUpdate()

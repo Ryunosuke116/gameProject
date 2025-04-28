@@ -41,21 +41,22 @@ private:
 	enum animationNumber
 	{
 		attack,
+		attack_Assault,
 		attack_Down,
 		attack_Rotate,
 		attack_Up,
 		attack_02,
 		block,
 		block_Idle,
+		Death,
 		idle,
+		jump,
 		roll,
 		run,
 		run_Back,
+		run_Jump,
 		run_Left,
-		run_Right,
-		attack_Assault,
-		jump,
-		run_Jump
+		run_Right
 	};
 
 public:

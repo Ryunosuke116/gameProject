@@ -524,10 +524,8 @@ void Player::StateCheck()
 /// <param name="motionNum"></param>
 void Player::ChangeMotion(const int& motionNum, const float playAnimSpeed)
 {
-    
     BaseChara::ChangeMotion(motionNum, playAnimSpeed);
     animNumber = motionNum;
-
 }
 
 /// <summary>
@@ -536,6 +534,11 @@ void Player::ChangeMotion(const int& motionNum, const float playAnimSpeed)
 void Player::MotionUpdate()
 {
     float totalTime_anim;
+
+    //if (isReset)
+    //{
+    //    animBlendRate = 1.0f;
+    //}
 
     // ブレンド率が１以下の場合は１に近づける
     if (animBlendRate < 1.0f)
@@ -584,11 +587,6 @@ void Player::MotionUpdate()
         //総再生時間を超えたら再生時間をリセット
         if (currentPlayTime_anim >= totalTime_anim)
         {
-            //回転斬りの場合、立ち状態に戻す
-            if (animNumber == attack_Rotate)
-            {
-                ChangeMotion(idle, PlayAnimSpeed);
-            }
             //ロールの場合
             if (isRoll)
             {
